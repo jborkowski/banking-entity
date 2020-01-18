@@ -2,6 +2,7 @@
 , compiler ? "default"
 , doBenchmark ? false }:
 let
+
   inherit (nixpkgs) pkgs;
   name = "banking-entity";
   haskellPackages = pkgs.haskellPackages;
@@ -21,9 +22,7 @@ in
         cabal-install
         cabal2nix
         hindent
-        # # if you want to add some system lib like ncurses
-        # # you could by writing it like:
-        # pkgs.ncurses
+        pkgs.zlib
       ];
     shellHook = ''
      export PS1="\n\[[${name}:\033[1;32m\]\W\[\033[0m\]]> "

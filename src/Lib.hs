@@ -11,12 +11,14 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
-module Lib (someFunc) where
+module Lib where
 
 import Control.Lens
-import Data.Text
-import GHC.Generics
+import Data.Text hiding (drop)
 import Data.Aeson
+import Data.Aeson.TH
+--import Data.Aeson.Types
+import GHC.Generics
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
@@ -29,7 +31,7 @@ data User =
     deriving (Generic, Show)
 
 makeLenses ''User
-instance ToJSON User
+deriveJSON defaultOptions{fieldLabelModifier = drop 1} ''User
 
 data Account =
     Account { _accountId :: Int
@@ -39,7 +41,7 @@ data Account =
     deriving (Generic, Show)
 
 makeLenses ''Account
-instance ToJSON Account
+deriveJSON defaultOptions{fieldLabelModifier = drop 1} ''Account
 
 
 

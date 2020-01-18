@@ -17,12 +17,15 @@ common shared-properties
   build-depends:
               base >=4.7 && <5 
 --            , protolude
-            , aeson
-            , containers
+            , aeson >= 1.2
             , servant
+            , servant-server 
+            , containers
             , lens
             , lens-aeson
             , text
+            , wai
+            , warp
   ghc-options:
               -Wall
               -Wcompat
