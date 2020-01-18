@@ -1,0 +1,16 @@
+dist-newstyle/
+result
+*~
+\#*\#
+.projectile
+dist
+dist-*
+cabal-dev
+cabal.project.local
+cabal.project.local~
+*/*.o
+*/*.hi
+*/*.chi
+*/**_flymake.hs
+.DS_Store
+
