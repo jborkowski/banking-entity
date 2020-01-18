@@ -12,13 +12,25 @@ import Servant
 import Lib
 
 type UserAPI = "users" :> Get '[JSON] [User]
+           :<|> "johndoe" :> Get '[JSON] User
+           :<|> "evacassidy" :> Get '[JSON] User
+
+johndoe :: User
+johndoe = User { _firstName = "John", _lastName = "Doe", _email = "john.doe@exampl.com" }
+
+evacassidy :: User
+evacassidy = User { _firstName = "Eva", _lastName = "Cassidy", _email = "evac@mus.gov" }
 
 users :: [User]
 users =
-    [ User { _firstName = "John", _lastName = "Doe", _email = "john.doe@exampl.com" } ]
+    [ johndoe
+    , evacassidy
+    ]
 
 server :: Server UserAPI
 server = return users
+     :<|> return johndoe
+     :<|> return evacassidy
 
 userAPI :: Proxy UserAPI
 userAPI = Proxy
