@@ -23,7 +23,9 @@ common shared-properties
             , containers
             , lens
             , lens-aeson
+            , stm
             , text
+            , http-api-data
             , wai
             , warp
   ghc-options:
