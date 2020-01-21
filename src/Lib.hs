@@ -38,7 +38,7 @@ data User =
          , _lastName :: String
          , _email :: String
          }
-    deriving (Generic, Show)
+    deriving (Generic, Eq, Show)
 
 makeLenses ''User
 deriveJSON defaultOptions{fieldLabelModifier = drop 1} ''User
@@ -48,27 +48,10 @@ data Account =
             , _user :: User
             , _balance :: Int
             }
-    deriving (Generic, Show)
+    deriving (Generic, Eq, Show)
 
 makeLenses ''Account
 deriveJSON defaultOptions{fieldLabelModifier = drop 1} ''Account
-
-
-
--- updateMoneyAndStockStm :: Eq a => a -> Integer
---                        -> TVar Integer -> TVar [(a,Integer)] -> STM ()
--- updateMoneyAndStockStm product price money stock =
---   do s <- readTVar stock
---      let Just productNo = lookup product s
---      if productNo > 0
---        then do m <- readTVar money
---                let newS = map (\(k,v) -> if k == product
---                                             then (k,v-1)
---                                             else (k,v)) s
---                writeTVar money (m + price) >> writeTVar stock newS
---        else return ()
-
--- Add STM with state
 
 exampleAccount = User { _firstName = "Joey", _lastName = "Tribbiani", _email = "joey.tribbiani@mov.com"}
 
@@ -77,20 +60,18 @@ newAccountName =
     folding (\s -> s ^.. firstName . to (fmap toLower)
                 <> s ^.. lastName . to (fmap toLower))
 
+emptyAccount :: User -> Account
+emptyAccount user = Account { _accountName = (_email user), _user = user, _balance = 0 }
+
 createAccount :: User
               -> TVar (M.Map String Account)
               -> STM ()
-createAccount user state =
-  do s <- readTVar state
-     let key = user ^.. newAccountName . folded
-         maybeAccout = M.lookup accountName s
-           if isNothing maybeAccount then
-             let account :: Account
-                 account = Account { _accountName = accountName, _user = user, _balance = 0 }
-                 newAccountMap = M.Map String Account
-                 newAccountMap = M.insert accountName account s
-              writeTVar state account
-           else return ()               
+createAccount user bank =
+  do s <- readTVar bank
+     let email = _email user
+     if (/=Nothing) (M.lookup email s) then
+       writeTVar bank (M.insert email (emptyAccount user) s)
+     else return ()
 
 deposit :: Text -> Int
 deposit = undefined
