@@ -8,7 +8,9 @@ module Main where
 -- import GHC.TypeLits
 import Network.Wai.Handler.Warp
 import Servant
+import qualified Data.Map as M
 import Lib
+import Control.Concurrent.STM
 
 type UserAPI = "users" :> Get '[JSON] [User]
            :<|> "johndoe" :> Get '[JSON] User
@@ -38,7 +40,9 @@ app :: Application
 app = serve userAPI server
 
 main :: IO ()
-main = run 8081 app
-
+-- main = run 8081 app
+main =
+  do bank <- newTVarIO (M.empty)
+     run 8081 app
 
 

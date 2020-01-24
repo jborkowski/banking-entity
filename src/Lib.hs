@@ -79,8 +79,12 @@ deposit = undefined
 withdraw :: Text -> Int
 withdraw = undefined
 
-checkBalance :: Text -> Int
-checkBalance = undefined
+checkBalance :: String
+             -> TVar (M.Map String Account)
+             -> STM (Maybe Int)
+checkBalance email bank =
+  do s <- readTVar bank
+     return (fmap (\a -> _balance a) (M.lookup email s))
 
 transfer :: Text -> Text -> Int
 transfer = undefined
