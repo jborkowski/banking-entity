@@ -25,6 +25,7 @@ common shared-properties
             , lens-aeson
             , stm
             , text
+            , transformers
             , http-api-data
             , wai
             , warp
