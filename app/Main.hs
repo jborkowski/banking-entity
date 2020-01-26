@@ -9,6 +9,8 @@ import qualified Data.Map as M
 import Control.Concurrent.STM (readTVar, writeTVar, TVar, newTVar, atomically)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
+import Control.Exception (throwIO)
+import Models
 import Lib
 
 newtype State = State { accounts :: TVar (M.Map String Account) }
@@ -31,6 +33,7 @@ getAccount (Just aname) =  do
   liftIO $ atomically $ M.lookup aname <$> readTVar a
 getAccount Nothing =
   return Nothing
+--  liftIO $ throwIO err400 { errBody = "Missing 'accountName' parameter" }
 
 -- Add Error handling 
 addAccount :: User -> AppM ()

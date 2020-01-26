@@ -23,12 +23,15 @@ common shared-properties
             , containers
             , lens
             , lens-aeson
+            , mtl
             , stm
+            , safe
             , text
             , transformers
             , http-api-data
             , wai
             , warp
+            , monad-logger
   ghc-options:
               -Wall
               -Wcompat
@@ -40,7 +43,12 @@ common shared-properties
 
 library
   import: shared-properties
-  exposed-modules:    Lib
+  exposed-modules:
+              Lib
+            , Config
+            , Models
+            , Api
+            , Api.Account 
  --  build-depends:      protolude
   hs-source-dirs:     src
 
