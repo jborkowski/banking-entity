@@ -1,24 +1,25 @@
-{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Api.Account where
 
-import Control.Concurrent.STM (readTVar, writeTVar, TVar, newTVar, atomically)
 --import Control.Monad.IO.Class (liftIO)
+
+import Config (AppT (..))
+import Control.Concurrent.STM (TVar, atomically, newTVar, readTVar, writeTVar)
+import Control.Monad.Except (MonadIO, liftIO)
+import Control.Monad.Logger (logDebugNS)
 import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
-import           Control.Monad.Except        (MonadIO, liftIO)
-import           Control.Monad.Logger        (logDebugNS)
-import           Servant
-
-import           Config                      (AppT (..))
-import           Data.IORef                  (readIORef)
-import           Data.Text                   (Text)
-import           Models                      (Account, User)
-
+import Data.IORef (readIORef)
+import Data.Text (Text)
+import Models (Account, User)
+import Servant
 
 type GetAccount = QueryParam "accountName" String :> Get '[JSON] Account
+
 type AddAccount = ReqBody '[JSON] User :> PostCreated '[JSON] ()
+
 type AccountAPI = "account" :> (GetAccount :<|> AddAccount)
 
 -- type Metrics = "metrics" :> Get '[JSON] (HashMap Text Int64)
@@ -29,9 +30,8 @@ accountApi = Proxy
 accountServer :: MonadIO m => ServerT AccountAPI (AppT m)
 accountServer = getAccount :<|> addAccount
 
-
 -- FIXME: Add correct...
-addAccount :: MonadIO m => User -> AppT m () 
+addAccount :: MonadIO m => User -> AppT m ()
 addAccount user = do
   --State { accounts = a } <- ask
   --liftIO $ atomically $ readTVar a >>= writeTVar a . M.insert (_email newUser) (emptyAccount newUser)
@@ -50,7 +50,7 @@ getAccount = undefined
 --   return Nothing
 -- --  liftIO $ throwIO err400 { errBody = "Missing 'accountName' parameter" }
 
--- -- Add Error handling 
+-- -- Add Error handling
 -- addAccount :: User -> AppM ()
 -- addAccount newUser= do
 --   State { accounts = a } <- ask
@@ -83,6 +83,3 @@ getAccount = undefined
 --     logDebugNS "web" "metrics"
 -- --    metr <- Metrics.getMetrics
 --    liftIO $ mapM Counter.read =<< readIORef (metr ^. metricsCounters)
-
-
-  
