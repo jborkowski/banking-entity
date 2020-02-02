@@ -7,6 +7,7 @@ module Api
 where
 
 import Api.Account (AccountAPI, accountApi, accountServer)
+import Api.Operations (OperationsAPI, operationsApi, operationsServer)
 import Config (AppT (..), Config (..))
 import Control.Monad.Reader (runReaderT)
 import Servant
@@ -19,8 +20,8 @@ import Servant
   )
 import Servant.Server
 
--- accountApp :: Config -> Application
--- accountApp cfg = serve accountApi (appToServer cfg)
+accountApp :: Config -> Application
+accountApp cfg = serve accountApi (appToServer cfg)
 
 appToServer :: Config -> Server AccountAPI
 appToServer cfg = hoistServer accountApi (convertApp cfg) accountServer

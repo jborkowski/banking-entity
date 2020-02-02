@@ -11,7 +11,6 @@ import Control.Monad.Except (MonadIO, liftIO)
 import Control.Monad.Logger (logDebugNS)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, ask, asks)
 import Control.Monad.Trans.Reader (runReaderT)
-import Data.IORef (readIORef)
 import qualified Data.Map as M (insert, lookup)
 import Data.Text (Text)
 import Models
@@ -46,7 +45,7 @@ getAccount (Just name) = do
       throwError $ err400 {errBody = "Account with provided name doesn't exists"}
     Just account ->
       return account
-getAccount Nothing = do
+getAccount Nothing =
   throwError err400 {errBody = "To find account informations, please provide account name"}
 
 _getAccount :: (MonadReader Config m, MonadIO m) => String -> m (Maybe Account)

@@ -50,7 +50,7 @@ withdraw = undefined
 checkBalance ::
   String ->
   TVar (M.Map String Account) ->
-  STM (Maybe Int)
+  STM (Maybe Balance)
 checkBalance email bank =
   do
     s <- readTVar bank
