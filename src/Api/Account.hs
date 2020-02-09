@@ -6,13 +6,10 @@
 module Api.Account where
 
 import Config (AppT (..), Config (..))
-import Control.Concurrent.STM (TVar, atomically, newTVar, readTVar, writeTVar)
+import Control.Concurrent.STM (atomically, readTVar, writeTVar)
 import Control.Monad.Except (MonadIO, liftIO)
-import Control.Monad.Logger (logDebugNS)
-import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, ask, asks)
-import Control.Monad.Trans.Reader (runReaderT)
+import Control.Monad.Reader (MonadReader, asks)
 import qualified Data.Map as M (insert, lookup)
-import Data.Text (Text)
 import Models
 import Servant
 
@@ -29,8 +26,7 @@ accountServer :: (MonadIO m) => ServerT AccountAPI (AppT m)
 accountServer = getAccount :<|> addAccount
 
 addAccount :: (MonadIO m) => User -> AppT m ()
-addAccount newUser = do
-  _addAccount newUser
+addAccount = _addAccount
 
 _addAccount :: (MonadReader Config m, MonadIO m) => User -> m ()
 _addAccount newUser = do

@@ -6,27 +6,17 @@
 
 module Models where
 
+import Control.Concurrent.STM (TVar)
 import Control.Lens
 import Data.Aeson
 import Data.Aeson.TH
+import qualified Data.Map.Strict as M
+import Data.Map.Strict (Map)
 import GHC.Generics
 
 type Balance = Int
 
---makeLenses ''Balance
-
-emptyBalance :: Balance
-emptyBalance = 0
-
-newtype Name
-  = Name
-      { getName :: String
-      }
-  deriving (Generic, Show)
-
-makeLenses ''Name
-
--- deriveJSON defaultOptions ''Name
+type AccountName = String
 
 data User
   = User
@@ -42,7 +32,7 @@ deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''User
 
 data Account
   = Account
-      { _accountName :: String,
+      { _name :: AccountName,
         _user :: User,
         _balance :: Balance
       }
@@ -53,13 +43,26 @@ makeLenses ''Account
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Account
 
 emptyAccount :: User -> Account
-emptyAccount user = Account {_accountName = (_email user), _user = user, _balance = emptyBalance}
+emptyAccount user = Account {_name = (_email user), _user = user, _balance = 0}
 
-data DepositForm
-  = DepositForm
-      { _aName :: String,
+type Accounts = TVar (M.Map AccountName Account)
+
+data OperationForm
+  = OperationForm
+      { _accountName :: AccountName,
         _ammount :: Int
       }
   deriving (Generic, Show)
 
-deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''DepositForm
+makeLenses ''OperationForm
+
+deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''OperationForm
+
+data TransferForm
+  = TransferForm
+      { _from :: AccountName,
+        _to :: AccountName,
+        _transferAmmount :: Int
+      }
+
+deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''TransferForm
