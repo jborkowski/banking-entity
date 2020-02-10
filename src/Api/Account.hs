@@ -28,6 +28,7 @@ accountServer = getAccount :<|> addAccount
 addAccount :: (MonadIO m) => User -> AppT m ()
 addAccount = _addAccount
 
+-- it make sense to make Map TVar ?
 _addAccount :: (MonadReader Config m, MonadIO m) => User -> m ()
 _addAccount newUser = do
   a <- asks accounts

@@ -30,20 +30,22 @@ makeLenses ''User
 
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''User
 
-data Account
-  = Account
+type Account = TVar AccountData
+
+data AccountData
+  = AccountData
       { _name :: AccountName,
         _user :: User,
         _balance :: Balance
       }
   deriving (Generic, Eq, Show)
 
-makeLenses ''Account
+makeLenses ''AccountData
 
-deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Account
+deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''AccountData
 
-emptyAccount :: User -> Account
-emptyAccount user = Account {_name = (_email user), _user = user, _balance = 0}
+emptyAccount :: User -> AccountData
+emptyAccount user = AccountData {_name = (_email user), _user = user, _balance = 0}
 
 type Accounts = TVar (M.Map AccountName Account)
 
