@@ -47,7 +47,7 @@ deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''AccountData
 emptyAccount :: User -> AccountData
 emptyAccount user = AccountData {_name = (_email user), _user = user, _balance = 0}
 
-type Accounts = TVar (M.Map AccountName Account)
+type Accounts = M.Map AccountName Account
 
 data OperationForm
   = OperationForm
