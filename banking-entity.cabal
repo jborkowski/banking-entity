@@ -66,5 +66,6 @@ executable banking-entity
 test-suite banking-entity-test
   import: shared-properties
   type:                exitcode-stdio-1.0
+  build-depends:       hspec
   hs-source-dirs:      test
-  main-is:             MyLibTest.hs
+  main-is:             TransactionsTest.hs

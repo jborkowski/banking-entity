@@ -13,11 +13,11 @@ import qualified Data.Map as M (insert, lookup)
 import Models
 import Servant
 
-type GetAccount = QueryParam "accountName" String :> Get '[JSON] AccountData
+type GetAccountData = QueryParam "accountName" String :> Get '[JSON] AccountData
 
-type AddAccount = ReqBody '[JSON] User :> PostCreated '[JSON] ()
+type CreateAccount = ReqBody '[JSON] User :> PostCreated '[JSON] ()
 
-type AccountAPI = "account" :> (GetAccount :<|> AddAccount)
+type AccountAPI = "account" :> (GetAccountData :<|> CreateAccount)
 
 accountApi :: Proxy AccountAPI
 accountApi = Proxy
