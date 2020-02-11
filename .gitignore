@@ -12,5 +12,6 @@ cabal.project.local~
 */*.hi
 */*.chi
 */**_flymake.hs
+*/**/**_flymake.hs
 .DS_Store
-
+log

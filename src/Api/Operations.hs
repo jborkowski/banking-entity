@@ -24,45 +24,46 @@ operationsApi :: Proxy OperationsAPI
 operationsApi = Proxy
 
 operationsServer :: (MonadIO m) => ServerT OperationsAPI (AppT m)
-operationsServer = deposit :<|> checkBalance
+operationsServer = undefined
+-- operationsServer = deposit :<|> checkBalance
 
-deposit :: (MonadIO m) => OperationForm -> AppT m ()
-deposit OperationForm {_ammount = a, _accountName = n} =
-  updateState depositSTM a n
+-- deposit :: (MonadIO m) => OperationForm -> AppT m ()
+-- deposit OperationForm {_ammount = a, _accountName = n} =
+--   updateState depositSTM a n
 
-withdraw :: (MonadIO m) => OperationForm -> AppT m ()
-withdraw OperationForm {_ammount = a, _accountName = n} =
-  updateState depositSTM a n
+-- withdraw :: (MonadIO m) => OperationForm -> AppT m ()
+-- withdraw OperationForm {_ammount = a, _accountName = n} =
+--   updateState depositSTM a n
 
-updateState :: (MonadReader Config m, MonadIO m) => (Int -> AccountName -> Accounts -> STM ()) -> Int -> AccountName -> m ()
-updateState fn a n =
-  asks accounts >>= liftIO . atomically . fn a n
+-- updateState :: (MonadReader Config m, MonadIO m) => (Int -> AccountName -> Accounts -> STM ()) -> Int -> AccountName -> m ()
+-- updateState fn a n =
+--   asks accounts >>= liftIO . atomically . fn a n
 
-depositSTM :: Int -> AccountName -> Accounts -> STM ()
-depositSTM a n state =
-  readTVar state >>= writeTVar state . M.adjust (balance +~ a) n
+-- depositSTM :: Int -> AccountName -> Accounts -> STM ()
+-- depositSTM a n state =
+--   readTVar state >>= writeTVar state . M.adjust (balance +~ a) n
 
-withdrawSTM :: Int -> AccountName -> Accounts -> STM ()
-withdrawSTM a n state =
-  readTVar state >>= writeTVar state . M.adjust (balance -~ a) n
+-- withdrawSTM :: Int -> AccountName -> Accounts -> STM ()
+-- withdrawSTM a n state =
+--   readTVar state >>= writeTVar state . M.adjust (balance -~ a) n
 
-checkBalance :: (MonadIO m) => Maybe String -> AppT m Balance
-checkBalance (Just name) = do
-  maybeAccount <- _checkBalance name
-  case maybeAccount of
-    Nothing ->
-      throwError $ err400 {errBody = "Account with provided name doesn't exists"}
-    Just b ->
-      return b
-checkBalance Nothing =
-  throwError err400 {errBody = "To check account balance, please provide account name"}
+-- checkBalance :: (MonadIO m) => Maybe String -> AppT m Balance
+-- checkBalance (Just name) = do
+--   maybeAccount <- _checkBalance name
+--   case maybeAccount of
+--     Nothing ->
+--       throwError $ err400 {errBody = "Account with provided name doesn't exists"}
+--     Just b ->
+--       return b
+-- checkBalance Nothing =
+--   throwError err400 {errBody = "To check account balance, please provide account name"}
 
-_checkBalance :: (MonadReader Config m, MonadIO m) => String -> m (Maybe Balance)
-_checkBalance aname = do
-  a <- asks accounts
-  liftIO $ atomically $ fmap _balance . M.lookup aname <$> readTVar a
+-- _checkBalance :: (MonadReader Config m, MonadIO m) => String -> m (Maybe Balance)
+-- _checkBalance aname = do
+--   a <- asks accounts
+--   liftIO $ atomically $ fmap _balance . M.lookup aname <$> readTVar a
 
-transfer :: AccountName -> AccountName -> Int -> Accounts -> IO ()
-transfer from to amount accounts =
-  undefined
---TODO: Reformat this structure to easly transfer money !!
+-- transfer :: AccountName -> AccountName -> Int -> Accounts -> IO ()
+-- transfer from to amount accounts =
+--   undefined
+-- --TODO: Reformat this structure to easly transfer money !!
