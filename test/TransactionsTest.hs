@@ -11,3 +11,5 @@ specs :: Spec
 specs = do
   it "can parse integers - smoke test" $ do
     read "10" `shouldBe` (10 :: Int)
+  it "have empty state" $ do
+    undefined

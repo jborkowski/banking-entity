@@ -6,10 +6,11 @@
 module Api.Account where
 
 import Config (AppT (..), Config (..))
-import Control.Concurrent.STM (atomically, readTVar, writeTVar)
+import Control.Concurrent.MVar (putMVar, readMVar)
+import Control.Concurrent.STM (atomically, newTVarIO, readTVar)
 import Control.Monad.Except (MonadIO, liftIO)
 import Control.Monad.Reader (MonadReader, asks)
-import qualified Data.Map as M (insert, lookup)
+import qualified Data.Map.Strict as M (insert, lookup)
 import Models
 import Servant
 
@@ -23,30 +24,34 @@ accountApi :: Proxy AccountAPI
 accountApi = Proxy
 
 accountServer :: (MonadIO m) => ServerT AccountAPI (AppT m)
-accountServer = undefined
--- accountServer = getAccount :<|> addAccount
+accountServer = showAccount :<|> createAccount
 
--- addAccount :: (MonadIO m) => User -> AppT m ()
--- addAccount = _addAccount
+createAccount :: (MonadIO m) => User -> AppT m ()
+createAccount newUser = do
+  u <- liftIO $ newTVarIO (emptyAccount newUser)
+  modifyAccounts (M.insert (genAccountName newUser) u)
 
--- -- it make sense to make Map TVar ?
--- _addAccount :: (MonadReader Config m, MonadIO m) => User -> m ()
--- _addAccount newUser = do
---   a <- asks accounts
---   liftIO $ atomically $ readTVar a >>= writeTVar a . M.insert (_email newUser) (emptyAccount newUser)
+genAccountName :: User -> AccountName
+genAccountName = _email
 
--- getAccount :: (MonadIO m) => Maybe String -> AppT m Account
--- getAccount (Just name) = do
---   maybeAccount <- _getAccount (name)
---   case maybeAccount of
---     Nothing ->
---       throwError $ err400 {errBody = "Account with provided name doesn't exists"}
---     Just account ->
---       return account
--- getAccount Nothing =
---   throwError err400 {errBody = "To find account informations, please provide account name"}
+modifyAccounts :: (MonadReader Config m, MonadIO m) => (Accounts -> Accounts) -> m ()
+modifyAccounts fn = do
+  state <- asks accounts
+  liftIO $ readMVar state >>= putMVar state . fn
 
--- _getAccount :: (MonadReader Config m, MonadIO m) => String -> m (Maybe Account)
--- _getAccount aname = do
---   a <- asks accounts
---   liftIO $ atomically $ M.lookup aname <$> readTVar a
+readAccounts :: (MonadReader Config m, MonadIO m) => m Accounts
+readAccounts = do
+  state <- asks accounts
+  liftIO $ readMVar state
+
+showAccount :: (MonadIO m) => Maybe String -> AppT m AccountData
+showAccount (Just aname) = do
+  a <- readAccounts
+  maybeAccount <- liftIO $ atomically $ traverse readTVar $ M.lookup aname a
+  case maybeAccount of
+    Nothing ->
+      throwError $ err400 {errBody = "Account with provided name doesn't exists"}
+    Just account ->
+      return account
+showAccount Nothing =
+  throwError err400 {errBody = "Missing 'account name' param"}
