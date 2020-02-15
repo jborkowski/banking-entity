@@ -52,7 +52,7 @@ type Accounts = M.Map AccountName Account
 data OperationForm
   = OperationForm
       { _accountName :: AccountName,
-        _ammount :: Int
+        _amount :: Int
       }
   deriving (Generic, Show)
 
@@ -64,7 +64,7 @@ data TransferForm
   = TransferForm
       { _from :: AccountName,
         _to :: AccountName,
-        _transferAmmount :: Int
+        _transferAmount :: Int
       }
 
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''TransferForm

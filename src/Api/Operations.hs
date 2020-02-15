@@ -6,9 +6,10 @@
 module Api.Operations where
 
 import Config (AppT (..), Config (..))
-import Control.Concurrent.STM (STM, TVar, atomically, check, newTVar, readTVar, readTVarIO, writeTVar)
-import Control.Lens
-import Control.Monad.Except (MonadIO, liftIO)
+import Control.Concurrent.MVar (putMVar, readMVar)
+import Control.Concurrent.STM (STM, TVar, atomically, check, modifyTVar, newTVar, readTVar, readTVarIO, writeTVar)
+import Control.Lens ((+~), (-~))
+import Control.Monad.Except (MonadError, MonadIO, liftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, ask, asks)
 import qualified Data.Map as M (Map, adjust, insert, lookup)
 import Models
@@ -24,46 +25,44 @@ operationsApi :: Proxy OperationsAPI
 operationsApi = Proxy
 
 operationsServer :: (MonadIO m) => ServerT OperationsAPI (AppT m)
-operationsServer = undefined
--- operationsServer = deposit :<|> checkBalance
+operationsServer = deposit :<|> checkBalance
 
--- deposit :: (MonadIO m) => OperationForm -> AppT m ()
--- deposit OperationForm {_ammount = a, _accountName = n} =
---   updateState depositSTM a n
+deposit :: (MonadIO m) => OperationForm -> AppT m ()
+deposit OperationForm {_amount = a, _accountName = n} =
+  readAccount n >>= liftIO . atomically . _deposit a
 
--- withdraw :: (MonadIO m) => OperationForm -> AppT m ()
--- withdraw OperationForm {_ammount = a, _accountName = n} =
---   updateState depositSTM a n
+_deposit :: Int -> Account -> STM ()
+_deposit amount account = modifyTVar account (balance +~ amount)
 
--- updateState :: (MonadReader Config m, MonadIO m) => (Int -> AccountName -> Accounts -> STM ()) -> Int -> AccountName -> m ()
--- updateState fn a n =
---   asks accounts >>= liftIO . atomically . fn a n
+withdraw :: (MonadIO m) => OperationForm -> AppT m ()
+withdraw OperationForm {_amount = a, _accountName = n} =
+  readAccount n >>= liftIO . atomically . _withdraw a
 
--- depositSTM :: Int -> AccountName -> Accounts -> STM ()
--- depositSTM a n state =
---   readTVar state >>= writeTVar state . M.adjust (balance +~ a) n
+_withdraw :: Int -> Account -> STM ()
+_withdraw amount account = modifyTVar account (balance -~ amount)
 
--- withdrawSTM :: Int -> AccountName -> Accounts -> STM ()
--- withdrawSTM a n state =
---   readTVar state >>= writeTVar state . M.adjust (balance -~ a) n
+checkBalance :: (MonadIO m) => Maybe String -> AppT m Balance
+checkBalance (Just n) = do
+  a <- readAccount n
+  acc <- liftIO $ readTVarIO a
+  return $ _balance acc
+checkBalance Nothing =
+  throwError err400 {errBody = "To check account balance, please provide account name"}
 
--- checkBalance :: (MonadIO m) => Maybe String -> AppT m Balance
--- checkBalance (Just name) = do
---   maybeAccount <- _checkBalance name
---   case maybeAccount of
---     Nothing ->
---       throwError $ err400 {errBody = "Account with provided name doesn't exists"}
---     Just b ->
---       return b
--- checkBalance Nothing =
---   throwError err400 {errBody = "To check account balance, please provide account name"}
+transfer :: (MonadIO m) => AccountName -> AccountName -> Int -> AppT m ()
+transfer from to amount = do
+  fromAccount <- readAccount from
+  toAccount <- readAccount to
+  liftIO $ atomically $
+    ( do
+        _withdraw amount toAccount
+        _deposit amount fromAccount
+    )
 
--- _checkBalance :: (MonadReader Config m, MonadIO m) => String -> m (Maybe Balance)
--- _checkBalance aname = do
---   a <- asks accounts
---   liftIO $ atomically $ fmap _balance . M.lookup aname <$> readTVar a
-
--- transfer :: AccountName -> AccountName -> Int -> Accounts -> IO ()
--- transfer from to amount accounts =
---   undefined
--- --TODO: Reformat this structure to easly transfer money !!
+readAccount :: (MonadReader Config m, MonadIO m, MonadError ServerError m) => AccountName -> m Account
+readAccount n = do
+  stateVar <- asks accounts
+  state <- liftIO $ readMVar stateVar
+  case M.lookup n state of
+    Nothing -> throwError err400 {errBody = "Cannot find account with provided name"}
+    Just account -> return account
