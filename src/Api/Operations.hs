@@ -6,13 +6,13 @@
 module Api.Operations where
 
 import Config (AppT (..), Config (..))
-import Control.Concurrent.MVar (putMVar, readMVar)
-import Control.Concurrent.STM (STM, TVar, atomically, check, modifyTVar, newTVar, readTVar, readTVarIO, writeTVar)
+import Control.Concurrent.MVar (readMVar)
+import Control.Concurrent.STM (STM, TVar, atomically, modifyTVar, readTVarIO)
 import Control.Lens ((+~), (-~))
 import Control.Monad.Except (MonadError, MonadIO, liftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, ask, asks)
-import qualified Data.Map as M (Map, adjust, insert, lookup)
-import Models
+import qualified Data.Map as M (Map, lookup)
+import Models hiding (amount)
 import Servant
 
 type Deposit = "deposit" :> ReqBody '[JSON] OperationForm :> PostCreated '[JSON] ()
@@ -53,10 +53,14 @@ transfer :: (MonadIO m) => AccountName -> AccountName -> Int -> AppT m ()
 transfer from to amount = do
   fromAccount <- readAccount from
   toAccount <- readAccount to
+  liftIO $ _transfer fromAccount toAccount amount
+
+_transfer :: (MonadIO m) => Account -> Account -> Int -> m ()
+_transfer from to amount =
   liftIO $ atomically $
     ( do
-        _withdraw amount toAccount
-        _deposit amount fromAccount
+        _withdraw amount from
+        _deposit amount to
     )
 
 readAccount :: (MonadReader Config m, MonadIO m, MonadError ServerError m) => AccountName -> m Account

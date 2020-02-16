@@ -49,6 +49,9 @@ emptyAccount user = AccountData {_name = (_email user), _user = user, _balance =
 
 type Accounts = M.Map AccountName Account
 
+emptyBank :: Accounts
+emptyBank = M.empty
+
 data OperationForm
   = OperationForm
       { _accountName :: AccountName,

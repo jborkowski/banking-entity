@@ -63,8 +63,10 @@ executable banking-entity
   hs-source-dirs: app
 
 test-suite banking-entity-test
-  import: shared-properties
+  import:              shared-properties
   type:                exitcode-stdio-1.0
-  build-depends:       hspec
+  build-depends:       banking-entity, hspec
+  main-is:             Spec.hs
   hs-source-dirs:      test
-  main-is:             TransactionsTest.hs
+  other-modules:       TransactionsSpec
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -fwarn-unused-imports
