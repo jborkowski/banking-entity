@@ -6,11 +6,11 @@
 module Api.Account where
 
 import Config (AppT (..), Config (..))
-import Control.Concurrent.MVar (putMVar, readMVar)
+import Control.Concurrent.MVar (modifyMVar_, readMVar)
 import Control.Concurrent.STM (atomically, newTVarIO, readTVar)
 import Control.Monad.Except (MonadIO, liftIO)
 import Control.Monad.Reader (MonadReader, asks)
-import qualified Data.Map.Strict as M (insert, lookup)
+import qualified Data.Map.Strict as M (insert, lookup, size)
 import Models
 import Servant
 
@@ -37,7 +37,7 @@ genAccountName = _email
 modifyAccounts :: (MonadReader Config m, MonadIO m) => (Accounts -> Accounts) -> m ()
 modifyAccounts fn = do
   state <- asks accounts
-  liftIO $ readMVar state >>= putMVar state . fn
+  liftIO $ modifyMVar_ state (\s -> return (fn s))
 
 readAccounts :: (MonadReader Config m, MonadIO m) => m Accounts
 readAccounts = do

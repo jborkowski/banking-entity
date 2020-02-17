@@ -7,25 +7,29 @@ module Api.Operations where
 
 import Config (AppT (..), Config (..))
 import Control.Concurrent.MVar (readMVar)
-import Control.Concurrent.STM (STM, TVar, atomically, modifyTVar, readTVarIO)
+import Control.Concurrent.STM (STM, atomically, modifyTVar, readTVarIO)
 import Control.Lens ((+~), (-~))
 import Control.Monad.Except (MonadError, MonadIO, liftIO)
-import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, ask, asks)
-import qualified Data.Map as M (Map, lookup)
+import Control.Monad.Reader (MonadReader, asks)
+import qualified Data.Map as M (lookup)
 import Models hiding (amount)
 import Servant
 
 type Deposit = "deposit" :> ReqBody '[JSON] OperationForm :> PostCreated '[JSON] ()
 
+type Withdraw = "withdraw" :> ReqBody '[JSON] OperationForm :> PostCreated '[JSON] ()
+
+type Transfer = "transfer" :> ReqBody '[JSON] TransferForm :> PostCreated '[JSON] ()
+
 type CheckBalance = "balance" :> QueryParam "accountName" String :> Get '[JSON] Balance
 
-type OperationsAPI = Deposit :<|> CheckBalance
+type OperationsAPI = Deposit :<|> Withdraw :<|> Transfer :<|> CheckBalance
 
 operationsApi :: Proxy OperationsAPI
 operationsApi = Proxy
 
 operationsServer :: (MonadIO m) => ServerT OperationsAPI (AppT m)
-operationsServer = deposit :<|> checkBalance
+operationsServer = deposit :<|> withdraw :<|> transfer :<|> checkBalance
 
 deposit :: (MonadIO m) => OperationForm -> AppT m ()
 deposit OperationForm {_amount = a, _accountName = n} =
@@ -49,19 +53,13 @@ checkBalance (Just n) = do
 checkBalance Nothing =
   throwError err400 {errBody = "To check account balance, please provide account name"}
 
-transfer :: (MonadIO m) => AccountName -> AccountName -> Int -> AppT m ()
-transfer from to amount = do
+transfer :: (MonadIO m) => TransferForm -> AppT m ()
+transfer TransferForm {_from = from, _to = to, _transferAmount = amount} = do
   fromAccount <- readAccount from
   toAccount <- readAccount to
-  liftIO $ _transfer fromAccount toAccount amount
-
-_transfer :: (MonadIO m) => Account -> Account -> Int -> m ()
-_transfer from to amount =
-  liftIO $ atomically $
-    ( do
-        _withdraw amount from
-        _deposit amount to
-    )
+  liftIO $ atomically $ do
+    _withdraw amount fromAccount
+    _deposit amount toAccount
 
 readAccount :: (MonadReader Config m, MonadIO m, MonadError ServerError m) => AccountName -> m Account
 readAccount n = do
