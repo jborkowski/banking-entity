@@ -15,11 +15,11 @@ import qualified Data.Map as M (lookup)
 import Models hiding (amount)
 import Servant
 
-type Deposit = "deposit" :> ReqBody '[JSON] OperationForm :> PostCreated '[JSON] ()
+type Deposit = "deposit" :> ReqBody '[JSON] OperationForm :> PostCreated '[JSON] NoContent
 
-type Withdraw = "withdraw" :> ReqBody '[JSON] OperationForm :> PostCreated '[JSON] ()
+type Withdraw = "withdraw" :> ReqBody '[JSON] OperationForm :> PostCreated '[JSON] NoContent
 
-type Transfer = "transfer" :> ReqBody '[JSON] TransferForm :> PostCreated '[JSON] ()
+type Transfer = "transfer" :> ReqBody '[JSON] TransferForm :> PostCreated '[JSON] NoContent
 
 type CheckBalance = "balance" :> QueryParam "accountName" String :> Get '[JSON] Balance
 
@@ -31,16 +31,18 @@ operationsApi = Proxy
 operationsServer :: (MonadIO m) => ServerT OperationsAPI (AppT m)
 operationsServer = deposit :<|> withdraw :<|> transfer :<|> checkBalance
 
-deposit :: (MonadIO m) => OperationForm -> AppT m ()
-deposit OperationForm {_amount = a, _accountName = n} =
+deposit :: (MonadIO m) => OperationForm -> AppT m NoContent
+deposit OperationForm {_amount = a, _accountName = n} = do
   readAccount n >>= liftIO . atomically . _deposit a
+  return NoContent
 
 _deposit :: Int -> Account -> STM ()
 _deposit amount account = modifyTVar account (balance +~ amount)
 
-withdraw :: (MonadIO m) => OperationForm -> AppT m ()
-withdraw OperationForm {_amount = a, _accountName = n} =
+withdraw :: (MonadIO m) => OperationForm -> AppT m NoContent
+withdraw OperationForm {_amount = a, _accountName = n} = do
   readAccount n >>= liftIO . atomically . _withdraw a
+  return NoContent
 
 _withdraw :: Int -> Account -> STM ()
 _withdraw amount account = modifyTVar account (balance -~ amount)
@@ -53,13 +55,14 @@ checkBalance (Just n) = do
 checkBalance Nothing =
   throwError err400 {errBody = "To check account balance, please provide account name"}
 
-transfer :: (MonadIO m) => TransferForm -> AppT m ()
+transfer :: (MonadIO m) => TransferForm -> AppT m NoContent
 transfer TransferForm {_from = from, _to = to, _transferAmount = amount} = do
   fromAccount <- readAccount from
   toAccount <- readAccount to
   liftIO $ atomically $ do
     _withdraw amount fromAccount
     _deposit amount toAccount
+  return NoContent
 
 readAccount :: (MonadReader Config m, MonadIO m, MonadError ServerError m) => AccountName -> m Account
 readAccount n = do

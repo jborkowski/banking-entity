@@ -10,13 +10,13 @@ import Control.Concurrent.MVar (modifyMVar_, readMVar)
 import Control.Concurrent.STM (atomically, newTVarIO, readTVar)
 import Control.Monad.Except (MonadIO, liftIO)
 import Control.Monad.Reader (MonadReader, asks)
-import qualified Data.Map.Strict as M (insert, lookup, size)
+import qualified Data.Map.Strict as M (insert, lookup)
 import Models
 import Servant
 
 type GetAccountData = QueryParam "accountName" String :> Get '[JSON] AccountData
 
-type CreateAccount = ReqBody '[JSON] User :> PostCreated '[JSON] ()
+type CreateAccount = ReqBody '[JSON] User :> PostCreated '[JSON] NoContent
 
 type AccountAPI = "account" :> (GetAccountData :<|> CreateAccount)
 
@@ -26,10 +26,11 @@ accountApi = Proxy
 accountServer :: (MonadIO m) => ServerT AccountAPI (AppT m)
 accountServer = showAccount :<|> createAccount
 
-createAccount :: (MonadIO m) => User -> AppT m ()
+createAccount :: (MonadIO m) => User -> AppT m NoContent
 createAccount newUser = do
   u <- liftIO $ newTVarIO (emptyAccount newUser)
   modifyAccounts (M.insert (genAccountName newUser) u)
+  return NoContent
 
 genAccountName :: User -> AccountName
 genAccountName = _email
